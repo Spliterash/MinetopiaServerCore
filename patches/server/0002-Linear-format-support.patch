@@ -102,10 +102,10 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..48370aa62bd7d6e65df25f5d4fb829f8
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf177f993da6 100644
+index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..98e0bf4afb43c20cb0e15abb819d8b0756ce6394 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-@@ -1,1055 +1,346 @@
+@@ -1,1055 +1,337 @@
  // mc-dev import
  package net.minecraft.world.level.chunk.storage;
  
@@ -630,8 +630,10 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -            throw new IllegalStateException("RegionFile is closed");
 -        }
 -        this.statuses[getChunkLocation(x, z)] = status;
--    }
--
++    private void markToSave() {
++        saver.markToSave();
+     }
+ 
 -    public net.minecraft.world.level.chunk.ChunkStatus getStatusIfCached(int x, int z) {
 -        if (this.closed) {
 -            // We've used an invalid region file.
@@ -639,15 +641,15 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -        }
 -        final int location = getChunkLocation(x, z);
 -        return this.statuses[location];
-+    private void markToSave() {
-+        saver.markToSave();
++    private boolean getAndResetMarker() {
++        return saver.getAndResetMarker();
      }
 -    // Paper end
  
 -    public RegionFile(Path file, Path directory, boolean dsync) throws IOException {
 -        this(file, directory, RegionFileVersion.VERSION_DEFLATE, dsync);
-+    private boolean getAndResetMarker() {
-+        return saver.getAndResetMarker();
++    public boolean doesChunkExist(ChunkPos pos) throws Exception {
++        throw new Exception("doesChunkExist is a stub");
      }
 -    // Paper start - add can recalc flag
 -    public RegionFile(Path file, Path directory, boolean dsync, boolean canRecalcHeader) throws IOException {
@@ -658,9 +660,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -    public RegionFile(Path file, Path directory, RegionFileVersion outputChunkStreamVersion, boolean dsync) throws IOException {
 -        // Paper start - add can recalc flag
 -        this(file, directory, outputChunkStreamVersion, dsync, false);
-+    public boolean doesChunkExist(ChunkPos pos) throws Exception {
-+        throw new Exception("doesChunkExist is a stub");
-     }
+-    }
 -    public RegionFile(Path file, Path directory, RegionFileVersion outputChunkStreamVersion, boolean dsync, boolean canRecalcHeader) throws IOException {
 -        this.canRecalcHeader = canRecalcHeader;
 -        // Paper end - add can recalc flag
@@ -682,21 +682,27 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -            } else {
 -                this.file = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
 -            }
- 
--            this.usedSectors.force(0, 2);
--            ((java.nio.Buffer) this.header).position(0); // CraftBukkit - decompile error
--            int i = this.file.read(this.header, 0L);
--
--            if (i != -1) {
--                if (i != 8192) {
--                    RegionFile.LOGGER.warn("Region file {} has truncated header: {}", file, i);
--                }
 +    void realFlush() throws Exception {
-+        LOGGER.info("Start flushing " + regionFile + " " + hashCode());
 +        long SUPERBLOCK = -4323716122432332390L;
 +        byte VERSION = 1;
 +        long timestamp = System.currentTimeMillis() / 1000L;
 +        short chunkCount = 0;
+ 
+-            this.usedSectors.force(0, 2);
+-            ((java.nio.Buffer) this.header).position(0); // CraftBukkit - decompile error
+-            int i = this.file.read(this.header, 0L);
++        File tempFile = new File(regionFile + ".tmp");
++        FileOutputStream fileStream = new FileOutputStream(tempFile);
+ 
+-            if (i != -1) {
+-                if (i != 8192) {
+-                    RegionFile.LOGGER.warn("Region file {} has truncated header: {}", file, i);
+-                }
++        ByteArrayOutputStream zstdByteArray = new ByteArrayOutputStream();
++        ZstdOutputStream zstdStream = new ZstdOutputStream(zstdByteArray, COMPRESSION_LEVEL);
++        zstdStream.setChecksum(true);
++        DataOutputStream zstdDataStream = new DataOutputStream(zstdStream);
++        DataOutputStream dataStream = new DataOutputStream(fileStream);
  
 -                final long j = Files.size(file); final long regionFileSize = j; // Paper - recalculate header on header corruption
 -
@@ -777,37 +783,22 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                }
 -                // Paper end
 -            }
-+        File tempFile = new File(regionFile + ".tmp");
-+        FileOutputStream fileStream = new FileOutputStream(tempFile);
- 
--        }
--    }
-+        ByteArrayOutputStream zstdByteArray = new ByteArrayOutputStream();
-+        ZstdOutputStream zstdStream = new ZstdOutputStream(zstdByteArray, COMPRESSION_LEVEL);
-+        zstdStream.setChecksum(true);
-+        DataOutputStream zstdDataStream = new DataOutputStream(zstdStream);
-+        DataOutputStream dataStream = new DataOutputStream(fileStream);
- 
--    private Path getExternalChunkPath(ChunkPos chunkPos) {
--        String s = "c." + chunkPos.x + "." + chunkPos.z + ".mcc"; // Paper - diff on change
 +        dataStream.writeLong(SUPERBLOCK);
 +        dataStream.writeByte(VERSION);
 +        dataStream.writeLong(timestamp);
 +        dataStream.writeByte(COMPRESSION_LEVEL);
  
--        return this.externalFileDir.resolve(s);
+-        }
 -    }
 +        int region_total = 0;
 +        int region_raw = 0;
  
--    // Paper start
--    private static ChunkPos getOversizedChunkPair(Path file) {
--        String fileName = file.getFileName().toString();
+-    private Path getExternalChunkPath(ChunkPos chunkPos) {
+-        String s = "c." + chunkPos.x + "." + chunkPos.z + ".mcc"; // Paper - diff on change
 +        LZ4FastDecompressor decompressor = LZ4Factory.fastestInstance().fastDecompressor();
  
--        if (!fileName.startsWith("c.") || !fileName.endsWith(".mcc")) {
--            return null;
--        }
+-        return this.externalFileDir.resolve(s);
+-    }
 +        ArrayList<byte[]> byteBuffers = new ArrayList<byte[]>();
 +        for (int i = 0; i < 32 * 32; i++) {
 +            if (this.bufferUncompressedSize[i] != 0) {
@@ -816,14 +807,25 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 +                byte[] content = new byte[bufferUncompressedSize[i]];
 +                decompressor.decompress(buffer[i], 0, content, 0, bufferUncompressedSize[i]);
  
--        String[] split = fileName.split("\\.");
+-    // Paper start
+-    private static ChunkPos getOversizedChunkPair(Path file) {
+-        String fileName = file.getFileName().toString();
 +                region_total += buffer[i].length;
 +                region_raw += content.length;
  
--        if (split.length != 4) {
+-        if (!fileName.startsWith("c.") || !fileName.endsWith(".mcc")) {
 -            return null;
 +                byteBuffers.add(content);
 +            } else byteBuffers.add(null);
+         }
+-
+-        String[] split = fileName.split("\\.");
+-
+-        if (split.length != 4) {
+-            return null;
++        for (int i = 0; i < 32 * 32; i++) {
++            zstdDataStream.writeInt(this.bufferUncompressedSize[i]);
++            zstdDataStream.writeInt(0);
          }
 -
 -        try {
@@ -834,12 +836,13 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -        } catch (NumberFormatException ex) {
 -            return null;
 +        for (int i = 0; i < 32 * 32; i++) {
-+            zstdDataStream.writeInt(this.bufferUncompressedSize[i]);
-+            zstdDataStream.writeInt(0);
++            if (byteBuffers.get(i) != null)
++                zstdDataStream.write(byteBuffers.get(i), 0, byteBuffers.get(i).length);
          }
 -    }
 -    // Paper end
--
++        zstdDataStream.close();
+ 
 -    @Nullable
 -    public synchronized DataInputStream getChunkDataInputStream(ChunkPos pos) throws IOException {
 -        int i = this.getOffset(pos);
@@ -893,7 +896,8 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                            }
 -                            // Paper end - recalculate header on regionfile corruption
 -                        }
--
++        dataStream.writeShort(chunkCount);
+ 
 -                        // Paper start - recalculate header on regionfile corruption
 -                        final DataInputStream ret = this.createExternalChunkInputStream(pos, RegionFile.getExternalChunkVersion(b0));
 -                        if (ret == null && this.canRecalcHeader && this.recalculateHeader()) {
@@ -928,28 +932,28 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                    }
 -                }
 -            }
-+        for (int i = 0; i < 32 * 32; i++) {
-+            if (byteBuffers.get(i) != null)
-+                zstdDataStream.write(byteBuffers.get(i), 0, byteBuffers.get(i).length);
-         }
+-        }
 -    }
-+        zstdDataStream.close();
++        byte[] compressed = zstdByteArray.toByteArray();
  
 -    private static int getTimestamp() {
 -        return (int) (Util.getEpochMillis() / 1000L);
 -    }
-+        dataStream.writeShort(chunkCount);
++        dataStream.writeInt(compressed.length);
++        dataStream.writeLong(XXHashFactory.fastestInstance().hash64().hash(compressed, 0, compressed.length, 0)); // TODO: Hash the contents, not the whole thing
  
 -    private static boolean isExternalStreamChunk(byte flags) {
 -        return (flags & 128) != 0;
 -    }
-+        byte[] compressed = zstdByteArray.toByteArray();
++        dataStream.write(compressed, 0, compressed.length);
++        dataStream.writeLong(SUPERBLOCK);
  
 -    private static byte getExternalChunkVersion(byte flags) {
 -        return (byte) (flags & -129);
--    }
-+        dataStream.writeInt(compressed.length);
-+        dataStream.writeLong(XXHashFactory.fastestInstance().hash64().hash(compressed, 0, compressed.length, 0)); // TODO: Hash the contents, not the whole thing
++        dataStream.close();
++        fileStream.close();
++        Files.move(tempFile.toPath(), this.regionFile, StandardCopyOption.REPLACE_EXISTING);
+     }
  
 -    @Nullable
 -    private DataInputStream createChunkInputStream(ChunkPos pos, byte flags, InputStream stream) throws IOException {
@@ -961,9 +965,9 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -        } else {
 -            return new DataInputStream(regionfilecompression.wrap(stream));
 -        }
--    }
-+        dataStream.write(compressed, 0, compressed.length);
-+        dataStream.writeLong(SUPERBLOCK);
++    public void flush() throws IOException {
++        markToSave();
+     }
  
 -    @Nullable
 -    private DataInputStream createExternalChunkInputStream(ChunkPos pos, byte flags) throws IOException {
@@ -974,39 +978,47 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -            return null;
 -        } else {
 -            return this.createChunkInputStream(pos, flags, Files.newInputStream(path));
-+        dataStream.close();
-+        fileStream.close();
-+        try {
-+            Files.move(tempFile.toPath(), this.regionFile, StandardCopyOption.REPLACE_EXISTING);
-+            LOGGER.info("flushing done" + regionFile + " " + hashCode());
-+        } catch (IOException exception) {
-+            LOGGER.info("Flushing fail" + regionFile + " " + hashCode());
-+            throw exception;
-         }
+-        }
++    public void setStatus(int x, int z, ChunkStatus status) {
++        this.statuses[getChunkIndex(x, z)] = status;
      }
  
 -    private static ByteArrayInputStream createStream(ByteBuffer buffer, int length) {
 -        return new ByteArrayInputStream(buffer.array(), buffer.position(), length);
 -    }
--
++    public synchronized void write(ChunkPos pos, ByteBuffer buffer) {
++        LZ4Compressor compressor = LZ4Factory.fastestInstance().fastCompressor();
++        try {
++            byte[] b = toByteArray(new ByteArrayInputStream(buffer.array()));
++            int uncompressedSize = b.length;
+ 
 -    private int packSectorOffset(int offset, int size) {
 -        return offset << 8 | size;
 -    }
--
++            int maxCompressedLength = compressor.maxCompressedLength(b.length);
++            byte[] compressed = new byte[maxCompressedLength];
++            int compressedLength = compressor.compress(b, 0, b.length, compressed, 0, maxCompressedLength);
++            b = new byte[compressedLength];
++            System.arraycopy(compressed, 0, b, 0, compressedLength);
+ 
 -    private static int getNumSectors(int sectorData) {
 -        return sectorData & 255;
 -    }
--
++            this.buffer[getChunkIndex(pos.x, pos.z)] = b;
++            this.bufferUncompressedSize[getChunkIndex(pos.x, pos.z)] = uncompressedSize;
++        } catch (IOException e) {
++            LOGGER.error("Chunk write IOException " + e + " " + this.regionFile);
++        }
+ 
 -    private static int getSectorNumber(int sectorData) {
 -        return sectorData >> 8 & 16777215;
-+    public void flush() throws IOException {
 +        markToSave();
      }
  
 -    private static int sizeToSectors(int byteCount) {
 -        return (byteCount + 4096 - 1) / 4096;
-+    public void setStatus(int x, int z, ChunkStatus status) {
-+        this.statuses[getChunkIndex(x, z)] = status;
++    public DataOutputStream getChunkDataOutputStream(ChunkPos pos) throws IOException {
++        return new DataOutputStream(new BufferedOutputStream(new RegionFile.ChunkBuffer(pos)));
      }
  
 -    public synchronized boolean doesChunkExist(ChunkPos pos) { // Paper - synchronized
@@ -1044,62 +1056,51 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                        if (l == 0) {
 -                            return false;
 -                        }
-+    public synchronized void write(ChunkPos pos, ByteBuffer buffer) {
-+        LZ4Compressor compressor = LZ4Factory.fastestInstance().fastCompressor();
-+        try {
-+            byte[] b = toByteArray(new ByteArrayInputStream(buffer.array()));
-+            int uncompressedSize = b.length;
- 
+-
 -                        int i1 = l - 1;
-+            int maxCompressedLength = compressor.maxCompressedLength(b.length);
-+            byte[] compressed = new byte[maxCompressedLength];
-+            int compressedLength = compressor.compress(b, 0, b.length, compressed, 0, maxCompressedLength);
-+            b = new byte[compressedLength];
-+            System.arraycopy(compressed, 0, b, 0, compressedLength);
++    private class ChunkBuffer extends ByteArrayOutputStream {
  
 -                        if (i1 < 0 || i1 > 4096 * k) {
 -                            return false;
 -                        }
 -                    }
--
++        private final ChunkPos pos;
+ 
 -                    return true;
 -                }
 -            } catch (IOException ioexception) {
 -                com.destroystokyo.paper.util.SneakyThrow.sneaky(ioexception); // Paper - we want the upper try/catch to retry this
 -                return false;
 -            }
-+            this.buffer[getChunkIndex(pos.x, pos.z)] = b;
-+            this.bufferUncompressedSize[getChunkIndex(pos.x, pos.z)] = uncompressedSize;
-+        } catch (IOException e) {
-+            LOGGER.error("Chunk write IOException " + e + " " + this.regionFile);
++        public ChunkBuffer(ChunkPos chunkcoordintpair) {
++            super();
++            this.pos = chunkcoordintpair;
          }
 -    }
  
 -    public DataOutputStream getChunkDataOutputStream(ChunkPos pos) throws IOException {
 -        return new DataOutputStream(this.version.wrap((OutputStream) (new RegionFile.ChunkBuffer(pos))));
-+        markToSave();
-     }
- 
+-    }
+-
 -    public void flush() throws IOException {
 -        this.file.force(true);
-+    public DataOutputStream getChunkDataOutputStream(ChunkPos pos) throws IOException {
-+        return new DataOutputStream(new BufferedOutputStream(new RegionFile.ChunkBuffer(pos)));
-     }
- 
+-    }
+-
 -    public void clear(ChunkPos pos) throws IOException {
 -        int i = RegionFile.getOffsetIndex(pos);
 -        int j = this.offsets.get(i);
-+    private class ChunkBuffer extends ByteArrayOutputStream {
- 
+-
 -        if (j != 0) {
 -            this.offsets.put(i, 0);
 -            this.timestamps.put(i, RegionFile.getTimestamp());
 -            this.writeHeader();
 -            Files.deleteIfExists(this.getExternalChunkPath(pos));
 -            this.usedSectors.free(RegionFile.getSectorNumber(j), RegionFile.getNumSectors(j));
--        }
--    }
-+        private final ChunkPos pos;
++        public void close() throws IOException {
++            ByteBuffer bytebuffer = ByteBuffer.wrap(this.buf, 0, this.count);
++            RegionFile.this.write(this.pos, bytebuffer);
+         }
+     }
  
 -    protected synchronized void write(ChunkPos pos, ByteBuffer buf) throws IOException {
 -        int i = RegionFile.getOffsetIndex(pos);
@@ -1127,10 +1128,10 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                Files.deleteIfExists(this.getExternalChunkPath(pos));
 -            };
 -            this.file.write(buf, (long) (k1 * 4096));
-+        public ChunkBuffer(ChunkPos chunkcoordintpair) {
-+            super();
-+            this.pos = chunkcoordintpair;
-         }
+-        }
++    private byte[] toByteArray(InputStream in) throws IOException {
++        ByteArrayOutputStream out = new ByteArrayOutputStream();
++        byte[] tempBuffer = new byte[4096];
  
 -        this.offsets.put(i, this.packSectorOffset(k1, j1));
 -        this.timestamps.put(i, RegionFile.getTimestamp());
@@ -1138,11 +1139,12 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -        regionfile_b.run();
 -        if (k != 0) {
 -            this.usedSectors.free(k, l);
-+        public void close() throws IOException {
-+            ByteBuffer bytebuffer = ByteBuffer.wrap(this.buf, 0, this.count);
-+            RegionFile.this.write(this.pos, bytebuffer);
++        int length;
++        while ((length = in.read(tempBuffer)) >= 0) {
++            out.write(tempBuffer, 0, length);
          }
--
+ 
++        return out.toByteArray();
      }
  
 -    private ByteBuffer createExternalStub() {
@@ -1178,26 +1180,9 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -
 -            throw throwable;
 -        }
-+    private byte[] toByteArray(InputStream in) throws IOException {
-+        ByteArrayOutputStream out = new ByteArrayOutputStream();
-+        byte[] tempBuffer = new byte[4096];
- 
+-
 -        if (filechannel != null) {
 -            filechannel.close();
-+        int length;
-+        while ((length = in.read(tempBuffer)) >= 0) {
-+            out.write(tempBuffer, 0, length);
-         }
- 
--        return () -> {
--            Files.move(path1, path, StandardCopyOption.REPLACE_EXISTING);
--        };
-+        return out.toByteArray();
-     }
- 
--    private void writeHeader() throws IOException {
--        ((java.nio.Buffer) this.header).position(0); // CraftBukkit - decompile error
--        this.file.write(this.header, 0L);
 +    @Nullable
 +    public synchronized DataInputStream getChunkDataInputStream(ChunkPos pos) throws IOException {
 +        if (this.bufferUncompressedSize[getChunkIndex(pos.x, pos.z)] != 0) {
@@ -1205,18 +1190,23 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 +            byte[] content = new byte[bufferUncompressedSize[getChunkIndex(pos.x, pos.z)]];
 +            decompressor.decompress(this.buffer[getChunkIndex(pos.x, pos.z)], 0, content, 0, bufferUncompressedSize[getChunkIndex(pos.x, pos.z)]);
 +            return new DataInputStream(new ByteArrayInputStream(content));
-+        }
+         }
+-
+-        return () -> {
+-            Files.move(path1, path, StandardCopyOption.REPLACE_EXISTING);
+-        };
 +        return null;
      }
  
--    private int getOffset(ChunkPos pos) {
--        return this.offsets.get(RegionFile.getOffsetIndex(pos));
+-    private void writeHeader() throws IOException {
+-        ((java.nio.Buffer) this.header).position(0); // CraftBukkit - decompile error
+-        this.file.write(this.header, 0L);
 +    public ChunkStatus getStatusIfCached(int x, int z) {
 +        return this.statuses[getChunkIndex(x, z)];
      }
  
--    public boolean hasChunk(ChunkPos pos) {
--        return this.getOffset(pos) != 0;
+-    private int getOffset(ChunkPos pos) {
+-        return this.offsets.get(RegionFile.getOffsetIndex(pos));
 +    public void clear(ChunkPos pos) {
 +        int i = getChunkIndex(pos.x, pos.z);
 +        this.buffer[i] = null;
@@ -1224,10 +1214,13 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 +        markToSave();
      }
  
+     public boolean hasChunk(ChunkPos pos) {
+-        return this.getOffset(pos) != 0;
+-    }
+-
 -    private static int getChunkLocation(int x, int z) { return (x & 31) + (z & 31) * 32; } // Paper - OBFHELPER - sort of, mirror of logic below
 -    private static int getOffsetIndex(ChunkPos pos) {
 -        return pos.getRegionLocalX() + pos.getRegionLocalZ() * 32;
-+    public boolean hasChunk(ChunkPos pos) {
 +        return this.bufferUncompressedSize[getChunkIndex(pos.x, pos.z)] > 0;
      }
  
@@ -1280,9 +1273,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -                oversizedCount += temp;
 -            }
 -        }
-+        LOGGER.info("Start closing " + regionFile + " " + hashCode());
 +        saver.close();
-+        LOGGER.info("Success closing " + regionFile + " " + hashCode());
      }
  
      private static int getChunkIndex(int x, int z) {
@@ -1339,8 +1330,10 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -            return NbtIo.read((java.io.DataInput) out);
 -        }
 -
--    }
--
++    CompoundTag getOversizedData(int x, int z) throws IOException {
++        throw new IOException("getOversizedData is a stub " + this.regionFile);
+     }
+ 
 -    public static final int MAX_CHUNK_SIZE = 500 * 1024 * 1024; // Paper - don't write garbage data to disk if writing serialization fails
 -
 -    // Paper end
@@ -1382,10 +1375,8 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..74bf3b949b811f766d49b9c1c20baf17
 -            bytebuffer.putInt(0, this.count - 5 + 1);
 -            RegionFile.this.write(this.pos, bytebuffer);
 -        }
-+    CompoundTag getOversizedData(int x, int z) throws IOException {
-+        throw new IOException("getOversizedData is a stub " + this.regionFile);
-     }
- 
+-    }
+-
 -    private interface CommitOp {
 -
 -        void run() throws IOException;
