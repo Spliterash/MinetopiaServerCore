@@ -3,7 +3,6 @@ import io.papermc.paperweight.util.Git
 plugins {
     java
     `maven-publish`
-    kotlin("jvm") version "1.7.21" apply false
     id("com.github.johnrengelman.shadow") version "7.1.2" apply false
     id("io.papermc.paperweight.patcher") version "1.3.9"
 }
@@ -25,7 +24,6 @@ dependencies {
 
 subprojects {
     apply(plugin = "java")
-    apply(plugin = "kotlin")
 
     java {
         toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
