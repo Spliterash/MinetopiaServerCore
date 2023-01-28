@@ -92,7 +92,3 @@ paperweight {
         }
     }
 }
-// Im too lazy for call this every time manually
-tasks.build {
-    dependsOn(tasks.createReobfPaperclipJar)
-}
