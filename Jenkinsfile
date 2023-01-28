@@ -3,6 +3,7 @@ pipeline {
     agent {
         dockerfile {
             filename ".ci/Dockerfile"
+            label 'minecraft-server-build-image'
             args '-v $HOST_HOME/.gradle:/root/.gradle -v $HOST_HOME/.m2:/root/.m2'
         }
     }
