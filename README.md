@@ -3,3 +3,4 @@
 
 Ядро включающее в себя все патчи pufferfish, а так же
 * [linear](https://github.com/xymb-endcrystalme/LinearRegionFileFormatTools) формат чанков, чтобы миры не весили по 3 терабайта
+* Возможность полностью отключить сохранение мира
