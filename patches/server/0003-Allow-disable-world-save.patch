@@ -4,6 +4,18 @@ Date: Sat, 28 Jan 2023 16:39:32 +0300
 Subject: [PATCH] Allow disable world save
 
 
+diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+index 5c54a5da7fb50cd97799c5fa280a24d5c6117244..b6d38af89a03c9a8621e95130f3a3f9b5461decc 100644
+--- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -228,6 +228,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         // Paper end
+         gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
+         gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
++        ru.minetopia.server.MinetopiaConfig.load(); // Minetopia
+ 
+         this.setPvpAllowed(dedicatedserverproperties.pvp);
+         this.setFlightAllowed(dedicatedserverproperties.allowFlight);
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 index 59e1dc3a0095fb140aaf4b3756d2c0b8554f3ff9..74783fa234d8383ccb135187bf4aca248382bee6 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
