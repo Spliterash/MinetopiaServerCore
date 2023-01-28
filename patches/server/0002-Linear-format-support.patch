@@ -101,10 +101,10 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..48370aa62bd7d6e65df25f5d4fb829f8
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..205653c58055f0d46787b4541bd2063bc8d50c7f 100644
+index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..59e1dc3a0095fb140aaf4b3756d2c0b8554f3ff9 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-@@ -1,1055 +1,342 @@
+@@ -1,1055 +1,341 @@
  // mc-dev import
  package net.minecraft.world.level.chunk.storage;
  
@@ -792,7 +792,6 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..205653c58055f0d46787b4541bd2063b
  
 +        Lock lock = GLOBAL_FLUSH_LOCK.computeIfAbsent(regionFile, (ignore) -> new ReentrantLock());
 +        lock.lock();
-+        LOGGER.info("Start flushin " + regionFile);
          try {
 -            int x = Integer.parseInt(split[1]);
 -            int z = Integer.parseInt(split[2]);
