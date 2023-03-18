@@ -1,5 +1,5 @@
 # MinetopiaServerCore - Моё серверное ядро для майнкрафта
-Скачать можно [отсюда](https://jenkins.spliterash.ru/job/public/job/MinetopiaServerCore/)
+Скачать можно из github actions
 
 Ядро включающее в себя все патчи pufferfish, а так же
 * Фикс API для установки визуального ломания блока, [PULL в Paper](https://github.com/PaperMC/Paper/pull/8473)
