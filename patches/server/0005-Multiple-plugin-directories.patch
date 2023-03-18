@@ -1,0 +1,96 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Spliterash <me@spliterash.ru>
+Date: Sat, 18 Mar 2023 20:01:14 +0300
+Subject: [PATCH] Multiple plugin directories
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index a299a6e675b007ebdbdb9c95d1d88165745c7bb7..a4eb664454d7a2e8632bfc28b32b9cbe859adb0d 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -25,21 +25,7 @@ import java.io.IOException;
+ import java.io.InputStreamReader;
+ import java.nio.ByteBuffer;
+ import java.nio.charset.StandardCharsets;
+-import java.util.ArrayList;
+-import java.util.Base64;
+-import java.util.Collections;
+-import java.util.HashMap;
+-import java.util.HashSet;
+-import java.util.Iterator;
+-import java.util.LinkedHashMap;
+-import java.util.LinkedHashSet;
+-import java.util.List;
+-import java.util.Locale;
+-import java.util.Map;
+-import java.util.Objects;
+-import java.util.Optional;
+-import java.util.Set;
+-import java.util.UUID;
++import java.util.*;
+ import java.util.function.Consumer;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+@@ -243,6 +229,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
+ import org.yaml.snakeyaml.error.MarkedYAMLException;
+ 
+ import net.md_5.bungee.api.chat.BaseComponent; // Spigot
++import ru.minetopia.server.MinetopiaConfig;
+ 
+ import javax.annotation.Nullable; // Paper
+ import javax.annotation.Nonnull; // Paper
+@@ -414,13 +401,28 @@ public final class CraftServer implements Server {
+         this.pluginManager.registerInterface(JavaPluginLoader.class);
+ 
+         File pluginFolder = this.getPluginsFolder(); // Paper
++        // Minetopia start
++        List<File> extraPlugins = new ArrayList<>();
++        for (String path : MinetopiaConfig.pluginFolders) {
++            File folder = new File(path);
++            File[] folderPlugins = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
++            if (folderPlugins == null)
++                continue;
++
++            extraPlugins.addAll(Arrays.asList(folderPlugins));
++        }
++
++        extraPlugins.addAll(this.extraPluginJars());
++
++
++        // Minetopia end
+ 
+         // Paper start
+         if (true || pluginFolder.exists()) {
+             if (!pluginFolder.exists()) {
+                 pluginFolder.mkdirs();
+             }
+-            Plugin[] plugins = this.pluginManager.loadPlugins(pluginFolder, this.extraPluginJars());
++            Plugin[] plugins = this.pluginManager.loadPlugins(pluginFolder, extraPlugins); // MINETOPIA
+             // Paper end
+             for (Plugin plugin : plugins) {
+                 try {
+diff --git a/src/main/java/ru/minetopia/server/MinetopiaConfig.java b/src/main/java/ru/minetopia/server/MinetopiaConfig.java
+index e626d568eaa347cbfae14b91cb3981f7b17c8450..2c7806b15f355f683ff596bba739f2693d297fb1 100644
+--- a/src/main/java/ru/minetopia/server/MinetopiaConfig.java
++++ b/src/main/java/ru/minetopia/server/MinetopiaConfig.java
+@@ -12,6 +12,7 @@ import java.io.File;
+ import java.io.IOException;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Modifier;
++import java.util.Collections;
+ import java.util.List;
+ 
+ public class MinetopiaConfig {
+@@ -136,4 +137,12 @@ public class MinetopiaConfig {
+             "Full disable any world save on disk"
+         );
+     }
++
++    public static List<String> pluginFolders;
++
++    private static void pluginFolders() {
++        pluginFolders = getStringList("plugin-folders", Collections.emptyList(),
++            "Additional plugin folders"
++        );
++    }
+ }
