@@ -5,10 +5,10 @@ Subject: [PATCH] Allow disable world save
 
 
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index 5c54a5da7fb50cd97799c5fa280a24d5c6117244..b6d38af89a03c9a8621e95130f3a3f9b5461decc 100644
+index ad4fdbdcf09f30d10e61ccf47f8fb9ce6bd92e73..4347e5634b9788936fe5db5648bae820df57ac5d 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -228,6 +228,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -223,6 +223,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
          // Paper end
          gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
          gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
@@ -48,7 +48,7 @@ index 59e1dc3a0095fb140aaf4b3756d2c0b8554f3ff9..74783fa234d8383ccb135187bf4aca24
          try {
              byte[] b = toByteArray(new ByteArrayInputStream(buffer.array()));
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java
-index 018fbda24a570c66b1d5b615f5cd0b3affde4024..de1d34da94727945b42bf8c997624042a91dc506 100644
+index 2e4c37673fc3a607c1ee7c00afb13fc4da70fb04..f938927e75aef1380a170e83a5ab7fae223e545e 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java
 @@ -1,6 +1,7 @@
@@ -63,7 +63,7 @@ index 018fbda24a570c66b1d5b615f5cd0b3affde4024..de1d34da94727945b42bf8c997624042
  import java.util.concurrent.locks.ReentrantLock;
  
  public class RegionFileChecker {
--    static final ScheduledExecutorService linearSaveExecutor = Executors.newScheduledThreadPool(10, new ThreadFactoryBuilder()
+-    static final ScheduledExecutorService linearSaveExecutor = Executors.newScheduledThreadPool(4, new ThreadFactoryBuilder()
 -        .setNameFormat("Linear parallel flusher - %1$d")
 -        .setUncaughtExceptionHandler((t, e) -> e.printStackTrace())
 -        .build());
@@ -76,7 +76,7 @@ index 018fbda24a570c66b1d5b615f5cd0b3affde4024..de1d34da94727945b42bf8c997624042
 -        linearSaveExecutor.scheduleWithFixedDelay(RegionFileChecker::check, 0, 10, TimeUnit.SECONDS);
 +        if (MinetopiaConfig.worldSave) {
 +
-+            linearSaveExecutor = Executors.newScheduledThreadPool(10, new ThreadFactoryBuilder()
++            linearSaveExecutor = Executors.newScheduledThreadPool(4, new ThreadFactoryBuilder()
 +                .setNameFormat("Linear parallel flusher - %1$d")
 +                .setUncaughtExceptionHandler((t, e) -> e.printStackTrace())
 +                .build());

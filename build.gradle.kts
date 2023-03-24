@@ -1,25 +1,24 @@
 import io.papermc.paperweight.util.Git
+import io.papermc.paperweight.util.constants.PAPERCLIP_CONFIG
 
 plugins {
     java
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.1.2" apply false
-    id("io.papermc.paperweight.patcher") version "1.3.9"
+    id("com.github.johnrengelman.shadow") version "8.1.0" apply false
+    id("io.papermc.paperweight.patcher") version "1.5.3"
 }
-
-val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
 repositories {
     mavenCentral()
-    maven(paperMavenPublicUrl) {
-        content { onlyForConfigurations(configurations.paperclip.name) }
+    maven("https://papermc.io/repo/repository/maven-public/") {
+        content { onlyForConfigurations(PAPERCLIP_CONFIG) }
     }
 }
 
 dependencies {
     remapper("net.fabricmc:tiny-remapper:0.8.6:fat")
-    decompiler("net.minecraftforge:forgeflower:1.5.605.7")
-    paperclip("io.papermc:paperclip:3.0.2")
+    decompiler("net.minecraftforge:forgeflower:2.0.627.2")
+    paperclip("io.papermc:paperclip:3.0.3")
 }
 
 subprojects {
@@ -42,8 +41,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven(paperMavenPublicUrl)
-
         maven("https://oss.sonatype.org/content/groups/public/")
         maven("https://papermc.io/repo/repository/maven-public/")
         maven("https://ci.emc.gs/nexus/content/groups/aikar/")
@@ -51,7 +48,6 @@ subprojects {
         maven("https://repo.md-5.net/content/repositories/releases/")
         maven("https://hub.spigotmc.org/nexus/content/groups/public/")
         maven("https://jitpack.io")
-        maven("https://nexus.spliterash.ru/repository/group/")
     }
 }
 
@@ -66,8 +62,8 @@ val initSubmodules by tasks.registering {
 paperweight {
     serverProject.set(project(":minetopia-server"))
 
-    remapRepo.set(paperMavenPublicUrl)
-    decompileRepo.set(paperMavenPublicUrl)
+    remapRepo.set("https://maven.fabricmc.net/")
+    decompileRepo.set("https://files.minecraftforge.net/maven/")
 
     upstreams {
         register("paper") {

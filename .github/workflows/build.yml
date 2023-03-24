@@ -41,3 +41,25 @@ jobs:
       with:
         name: server.jar
         path: build/libs/minetopia-paperclip-*-reobf.jar
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.vars.outputs.sha_short }}
+        release_name: "MinetopiaServer 1.19.4"
+        body: |
+          MinetopiaServer updated upstream
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/libs/build/libs/minetopia-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
+        asset_name: minetopia-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
+        asset_content_type: application/java-archive

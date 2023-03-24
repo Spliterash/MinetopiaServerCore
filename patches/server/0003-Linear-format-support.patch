@@ -5,7 +5,7 @@ Subject: [PATCH] Linear format support
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 8af30e895b599d250f87513361fd27f7dbd5d7d2..96be2111b031d05364e79fc848f1b637dc67e549 100644
+index 306763a7a624fc58a95de9134e267e4f7ccc3a35..a993c0c678a30545bcdd98290fe803d1f312c4fd 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -12,6 +12,10 @@ dependencies {
@@ -79,10 +79,10 @@ index a08cde4eefe879adcee7c4118bc38f98c5097ed0..5f6d9e7953f9beb4dcaea34cba0a24de
  
                  final boolean finalFailWrite = failedWrite;
 diff --git a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
-index 2955c1ee153c410ea45fe367bac8597621c9bbd0..48370aa62bd7d6e65df25f5d4fb829f8950f97cf 100644
+index e0bfeebeaac1aaea64bc07cdfdf7790e3e43ca7b..89919a188ff38d95a0e15ff65ecbe406e87e26c7 100644
 --- a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
 +++ b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
-@@ -57,7 +57,7 @@ public class WorldUpgrader {
+@@ -61,7 +61,7 @@ public class WorldUpgrader {
      private volatile int skipped;
      private final Object2FloatMap<ResourceKey<LevelStem>> progressMap = Object2FloatMaps.synchronize(new Object2FloatOpenCustomHashMap(Util.identityStrategy())); // CraftBukkit
      private volatile Component status = Component.translatable("optimizeWorld.stage.counting");
@@ -90,8 +90,8 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..48370aa62bd7d6e65df25f5d4fb829f8
 +    public static final Pattern REGEX = Pattern.compile("^r\\.(-?[0-9]+)\\.(-?[0-9]+)\\.linear$"); // Minetopia linear
      private final DimensionDataStorage overworldDataStorage;
  
-     public WorldUpgrader(LevelStorageSource.LevelStorageAccess session, DataFixer dataFixer, WorldGenSettings generatorOptions, boolean eraseCache) {
-@@ -231,7 +231,7 @@ public class WorldUpgrader {
+     public WorldUpgrader(LevelStorageSource.LevelStorageAccess session, DataFixer dataFixer, Registry<LevelStem> dimensionOptionsRegistry, boolean eraseCache) {
+@@ -235,7 +235,7 @@ public class WorldUpgrader {
          File file = this.levelStorage.getDimensionPath((ResourceKey) null).toFile(); // CraftBukkit
          File file1 = new File(file, "region");
          File[] afile = file1.listFiles((file2, s) -> {
@@ -1399,7 +1399,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..59e1dc3a0095fb140aaf4b3756d2c0b8
  }
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..018fbda24a570c66b1d5b615f5cd0b3affde4024
+index 0000000000000000000000000000000000000000..2e4c37673fc3a607c1ee7c00afb13fc4da70fb04
 --- /dev/null
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileChecker.java
 @@ -0,0 +1,68 @@
@@ -1416,7 +1416,7 @@ index 0000000000000000000000000000000000000000..018fbda24a570c66b1d5b615f5cd0b3a
 +import java.util.concurrent.locks.ReentrantLock;
 +
 +public class RegionFileChecker {
-+    static final ScheduledExecutorService linearSaveExecutor = Executors.newScheduledThreadPool(10, new ThreadFactoryBuilder()
++    static final ScheduledExecutorService linearSaveExecutor = Executors.newScheduledThreadPool(4, new ThreadFactoryBuilder()
 +        .setNameFormat("Linear parallel flusher - %1$d")
 +        .setUncaughtExceptionHandler((t, e) -> e.printStackTrace())
 +        .build());
@@ -1472,10 +1472,10 @@ index 0000000000000000000000000000000000000000..018fbda24a570c66b1d5b615f5cd0b3a
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
-index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977eebfb7000 100644
+index bd502ca721de0cab438d995efa00ad0554c0d2fe..96295088cba37904b82c71d20a39a0bf00446e47 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
-@@ -1,22 +1,18 @@
+@@ -1,23 +1,20 @@
  package net.minecraft.world.level.chunk.storage;
  
 +import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -1486,29 +1486,31 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
 -import java.io.DataOutput;
 -import java.io.DataOutputStream;
 -import java.io.IOException;
-+import net.minecraft.nbt.*;
-+import net.minecraft.world.level.ChunkPos;
-+
-+import javax.annotation.Nullable;
-+import java.io.*;
- import java.nio.file.Files;
- import java.nio.file.Path;
+-import java.nio.file.Path;
 -import javax.annotation.Nullable;
+ import net.minecraft.FileUtil;
 -import net.minecraft.nbt.CompoundTag;
 -import net.minecraft.nbt.ListTag;
 -import net.minecraft.nbt.NbtIo;
 -import net.minecraft.nbt.StreamTagVisitor;
 -import net.minecraft.nbt.Tag;
 -import net.minecraft.util.ExceptionCollector;
--import net.minecraft.world.level.ChunkPos;
++import net.minecraft.nbt.*;
+ import net.minecraft.world.level.ChunkPos;
+ 
++import javax.annotation.Nullable;
++import java.io.*;
++import java.nio.file.Files;
++import java.nio.file.Path;
 +import java.util.List;
 +import java.util.concurrent.*;
 +
 +import static net.minecraft.world.level.chunk.storage.RegionFileChecker.flushAll;
- 
++
  public class RegionFileStorage implements AutoCloseable {
  
-@@ -32,6 +28,7 @@ public class RegionFileStorage implements AutoCloseable {
+     public static final String ANVIL_EXTENSION = ".mca";
+@@ -32,6 +29,7 @@ public class RegionFileStorage implements AutoCloseable {
          // Paper start - add isChunkData param
          this(directory, dsync, false);
      }
@@ -1516,7 +1518,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
      RegionFileStorage(Path directory, boolean dsync, boolean isChunkData) {
          this.isChunkData = isChunkData;
          // Paper end - add isChunkData param
-@@ -42,7 +39,7 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -42,7 +40,7 @@ public class RegionFileStorage implements AutoCloseable {
      // Paper start
      public static @Nullable ChunkPos getRegionFileCoordinates(Path file) {
          String fileName = file.getFileName().toString();
@@ -1525,7 +1527,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
              return null;
          }
  
-@@ -72,21 +69,12 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -72,21 +70,12 @@ public class RegionFileStorage implements AutoCloseable {
          return regionfile != null ? regionfile.hasChunk(pos) : false;
      }
  
@@ -1548,13 +1550,14 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
              return regionfile;
          } else {
              if (this.regionCache.size() >= io.papermc.paper.configuration.GlobalConfiguration.get().misc.regionFileCacheSize) { // Paper - configurable
-@@ -96,17 +84,11 @@ public class RegionFileStorage implements AutoCloseable {
-             Files.createDirectories(this.folder);
+@@ -96,17 +85,11 @@ public class RegionFileStorage implements AutoCloseable {
+             FileUtil.createDirectoriesSafe(this.folder);
              Path path = this.folder;
              int j = chunkcoordintpair.getRegionX();
 -            Path path1 = path.resolve("r." + j + "." + chunkcoordintpair.getRegionZ() + ".mca"); // Paper - diff on change
+-            if (existingOnly && !java.nio.file.Files.exists(path1)) return null; // CraftBukkit
 +            Path path1 = path.resolve("r." + j + "." + chunkcoordintpair.getRegionZ() + ".linear"); // Paper - diff on change
-             if (existingOnly && !Files.exists(path1)) return null; // CraftBukkit
++            if (existingOnly && !Files.exists(path1)) return null; // CraftBukkit
              RegionFile regionfile1 = new RegionFile(path1, this.folder, this.sync, this.isChunkData); // Paper - allow for chunk regionfiles to regen header
  
              this.regionCache.putAndMoveToFirst(i, regionfile1);
@@ -1567,7 +1570,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
              return regionfile1;
          }
      }
-@@ -179,7 +161,7 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -179,7 +162,7 @@ public class RegionFileStorage implements AutoCloseable {
      @Nullable
      public CompoundTag read(ChunkPos pos) throws IOException {
          // CraftBukkit start - SPIGOT-5680: There's no good reason to preemptively create files on read, save that for writing
@@ -1576,7 +1579,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
          if (regionfile == null) {
              return null;
          }
-@@ -191,35 +173,14 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -191,35 +174,14 @@ public class RegionFileStorage implements AutoCloseable {
          // if we decide to re-read
          // Paper end
          // CraftBukkit end
@@ -1612,7 +1615,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
                      break label43;
                  }
  
-@@ -248,9 +209,6 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -248,9 +210,6 @@ public class RegionFileStorage implements AutoCloseable {
          }
  
          return nbttagcompound;
@@ -1621,8 +1624,8 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
 -        } // Paper end
      }
  
-     public void scanChunk(ChunkPos chunkcoordintpair, StreamTagVisitor streamtagvisitor) throws IOException {
-@@ -285,12 +243,11 @@ public class RegionFileStorage implements AutoCloseable {
+     public void scanChunk(ChunkPos chunkPos, StreamTagVisitor scanner) throws IOException {
+@@ -285,12 +244,11 @@ public class RegionFileStorage implements AutoCloseable {
      }
  
      protected void write(ChunkPos pos, @Nullable CompoundTag nbt) throws IOException {
@@ -1636,7 +1639,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
          int attempts = 0; Exception laste = null; while (attempts++ < 5) { try { // Paper
  
          if (nbt == null) {
-@@ -304,11 +261,6 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -304,11 +262,6 @@ public class RegionFileStorage implements AutoCloseable {
                  regionfile.setOversized(pos.x, pos.z, false); // Paper - We don't do this anymore, mojang stores differently, but clear old meta flag if it exists to get rid of our own meta file once last oversized is gone
                  dataoutputstream.close(); // Paper - only write if successful
              // Paper start - don't write garbage data to disk if writing serialization fails
@@ -1648,7 +1651,7 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..c38bb73ebdb055463abe12c3a93d977e
              } catch (Throwable throwable) {
                  if (dataoutputstream != null) {
                      try {
-@@ -334,45 +286,13 @@ public class RegionFileStorage implements AutoCloseable {
+@@ -334,45 +287,13 @@ public class RegionFileStorage implements AutoCloseable {
              net.minecraft.server.MinecraftServer.LOGGER.error("Failed to save chunk " + pos, laste);
          }
          // Paper end

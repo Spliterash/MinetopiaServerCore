@@ -5,7 +5,7 @@ Subject: [PATCH] Minetopia build changes
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 5b43f5c27ce903c53cbce245477fbdefdc88733f..8af30e895b599d250f87513361fd27f7dbd5d7d2 100644
+index 3c8293f002f11b430083502362fdc801f44aa138..306763a7a624fc58a95de9134e267e4f7ccc3a35 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -7,7 +7,7 @@ plugins {
@@ -18,10 +18,10 @@ index 5b43f5c27ce903c53cbce245477fbdefdc88733f..8af30e895b599d250f87513361fd27f7
      implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
          exclude("io.papermc.paper", "paper-api")
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 3cadf20891888b56ac70798d581d6a044a98c0a3..1eee1b07e98c4b539a1bd99550484d0c500104ac 100644
+index 6d5e9400892b86562519a893349ca55e566bfb24..677d726ba74a734e3cc324885d481855f4f70b4b 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1656,7 +1656,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1683,7 +1683,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      @DontObfuscate
      public String getServerModName() {
@@ -31,10 +31,10 @@ index 3cadf20891888b56ac70798d581d6a044a98c0a3..1eee1b07e98c4b539a1bd99550484d0c
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index a4848a507f620cff686992c2e95039ca60af6d0e..a299a6e675b007ebdbdb9c95d1d88165745c7bb7 100644
+index b2d94582037c091bd6a04451bf62b3f9c4923d19..ca8600676baddb54734e9469c56ac4814e6ca2ba 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -248,7 +248,7 @@ import javax.annotation.Nullable; // Paper
+@@ -256,7 +256,7 @@ import javax.annotation.Nullable; // Paper
  import javax.annotation.Nonnull; // Paper
  
  public final class CraftServer implements Server {

@@ -5,10 +5,10 @@ Subject: [PATCH] Fix blockBreakProgress
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index a5220a4e514865c70700527bcd2f941d852564c0..fa34221c915581f862fc64666d737647d6876022 100644
+index 1bada55af5d16437da4d16f9ded55f88a6121eb4..ab49ea354bf5f17a91ddefc1dafecf9127cd1962 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -1024,7 +1024,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -997,7 +997,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
          if (this.getHandle().connection == null) return;
  
