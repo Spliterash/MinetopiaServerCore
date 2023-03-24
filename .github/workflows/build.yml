@@ -1,26 +1,12 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
-
 name: Java CI with Gradle
-
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-
-permissions:
-  contents: read
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up JDK 17
@@ -41,6 +27,11 @@ jobs:
       with:
         name: server.jar
         path: build/libs/minetopia-paperclip-*-reobf.jar
+    - name: Set outputs
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Check outputs
+      run: echo ${{ steps.vars.outputs.sha_short }}
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -60,6 +51,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/libs/build/libs/minetopia-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
+        asset_path: build/libs/minetopia-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
         asset_name: minetopia-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
         asset_content_type: application/java-archive
