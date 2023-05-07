@@ -5,11 +5,11 @@ Subject: [PATCH] Allow disable world save
 
 
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index ad4fdbdcf09f30d10e61ccf47f8fb9ce6bd92e73..4347e5634b9788936fe5db5648bae820df57ac5d 100644
+index 582467e3419c23446b20d3076fbfce22115250a8..c0ce62803051b2aebe203e55090bdd630b5ac09f 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-@@ -223,6 +223,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
-         // Paper end
+@@ -233,6 +233,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         gg.pufferfish.pufferfish.PufferfishConfig.pufferfishFile = (java.io.File) options.valueOf("pufferfish-settings"); // Purpur
          gg.pufferfish.pufferfish.PufferfishConfig.load(); // Pufferfish
          gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
 +        ru.minetopia.server.MinetopiaConfig.load(); // Minetopia

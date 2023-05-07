@@ -1,33 +1,23 @@
 import io.papermc.paperweight.util.Git
-import io.papermc.paperweight.util.constants.PAPERCLIP_CONFIG
 
 plugins {
     java
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "8.1.0" apply false
-    id("io.papermc.paperweight.patcher") version "1.5.3"
+    id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+    id("io.papermc.paperweight.patcher") version "1.5.5"
 }
 
-repositories {
-    mavenCentral()
-    maven("https://papermc.io/repo/repository/maven-public/") {
-        content { onlyForConfigurations(PAPERCLIP_CONFIG) }
-    }
-}
-
-dependencies {
-    remapper("net.fabricmc:tiny-remapper:0.8.6:fat")
-    decompiler("net.minecraftforge:forgeflower:2.0.627.2")
-    paperclip("io.papermc:paperclip:3.0.3")
-}
-
-subprojects {
+allprojects {
     apply(plugin = "java")
+    apply(plugin = "maven-publish")
 
     java {
         toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
     }
+}
+val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
+subprojects {
     tasks.withType<JavaCompile>().configureEach {
         options.encoding = Charsets.UTF_8.name()
         options.release.set(17)
@@ -41,17 +31,27 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven("https://oss.sonatype.org/content/groups/public/")
-        maven("https://papermc.io/repo/repository/maven-public/")
-        maven("https://ci.emc.gs/nexus/content/groups/aikar/")
-        maven("https://repo.aikar.co/content/groups/aikar")
-        maven("https://repo.md-5.net/content/repositories/releases/")
-        maven("https://hub.spigotmc.org/nexus/content/groups/public/")
+        maven(paperMavenPublicUrl)
         maven("https://jitpack.io")
     }
 }
 
-val paperDir = layout.projectDirectory.dir("work/Pufferfish")
+repositories {
+    mavenCentral()
+    maven(paperMavenPublicUrl) {
+        content {
+            onlyForConfigurations(configurations.paperclip.name)
+        }
+    }
+}
+
+dependencies {
+    remapper("net.fabricmc:tiny-remapper:0.8.6:fat")
+    decompiler("net.minecraftforge:forgeflower:2.0.627.2")
+    paperclip("io.papermc:paperclip:3.0.3")
+}
+
+val paperDir = layout.projectDirectory.dir("work/Purpur")
 val initSubmodules by tasks.registering {
     outputs.upToDateWhen { false }
     doLast {
@@ -62,8 +62,8 @@ val initSubmodules by tasks.registering {
 paperweight {
     serverProject.set(project(":minetopia-server"))
 
-    remapRepo.set("https://maven.fabricmc.net/")
-    decompileRepo.set("https://files.minecraftforge.net/maven/")
+    remapRepo.set(paperMavenPublicUrl)
+    decompileRepo.set(paperMavenPublicUrl)
 
     upstreams {
         register("paper") {
@@ -74,12 +74,12 @@ paperweight {
 
             patchTasks {
                 register("api") {
-                    upstreamDir.set(paperDir.dir("pufferfish-api"))
+                    upstreamDir.set(paperDir.dir("Purpur-API"))
                     patchDir.set(layout.projectDirectory.dir("patches/api"))
                     outputDir.set(layout.projectDirectory.dir("minetopia-api"))
                 }
                 register("server") {
-                    upstreamDir.set(paperDir.dir("pufferfish-server"))
+                    upstreamDir.set(paperDir.dir("Purpur-Server"))
                     patchDir.set(layout.projectDirectory.dir("patches/server"))
                     outputDir.set(layout.projectDirectory.dir("minetopia-server"))
                     importMcDev.set(true)

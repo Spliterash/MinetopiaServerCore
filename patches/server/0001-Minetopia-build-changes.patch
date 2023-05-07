@@ -5,53 +5,62 @@ Subject: [PATCH] Minetopia build changes
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 3c8293f002f11b430083502362fdc801f44aa138..306763a7a624fc58a95de9134e267e4f7ccc3a35 100644
+index 22470f0ab8354a9f31a0f195f3fe80f2f5ee2f0e..0b3aeb43f6dbacc3995984095d379d6955392637 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -7,7 +7,7 @@ plugins {
  }
  
  dependencies {
--    implementation(project(":pufferfish-api")) // Pufferfish // Paper
-+    implementation(project(":minetopia-api")) // Pufferfish // Paper
-     // Pufferfish start
-     implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
-         exclude("io.papermc.paper", "paper-api")
+-    implementation(project(":purpur-api")) // Purpur
++    implementation(project(":minetopia-api")) // Minetopia
+     implementation("io.papermc.paper:paper-mojangapi:1.19.4-R0.1-SNAPSHOT") // Purpur
+     // Paper start
+     implementation("org.jline:jline-terminal-jansi:3.21.0")
+@@ -81,7 +81,7 @@ tasks.jar {
+         attributes(
+             "Main-Class" to "org.bukkit.craftbukkit.Main",
+             "Implementation-Title" to "CraftBukkit",
+-            "Implementation-Version" to "git-Purpur-$implementationVersion", // Pufferfish // Purpur
++            "Implementation-Version" to "git-Minetopia-$implementationVersion", // Pufferfish // Purpur // Minetopia
+             "Implementation-Vendor" to date, // Paper
+             "Specification-Title" to "Bukkit",
+             "Specification-Version" to project.version,
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 6d5e9400892b86562519a893349ca55e566bfb24..677d726ba74a734e3cc324885d481855f4f70b4b 100644
+index beb05039926e1fb7a656dfcd0c503f82db67fc46..8a75229d1a0799de7e918ecaba7cc48830e34fa3 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1683,7 +1683,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1711,7 +1711,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      @DontObfuscate
      public String getServerModName() {
--        return "Pufferfish"; // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+-        return org.purpurmc.purpur.PurpurConfig.serverModName; // Purpur - Purpur > // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
 +        return "Minetopia"; // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
      }
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index b2d94582037c091bd6a04451bf62b3f9c4923d19..ca8600676baddb54734e9469c56ac4814e6ca2ba 100644
+index 861afc3e8fed9884d4efb0b9548cfc2df9c27adc..919dcf429fc1e58d08c63a8f747e7b686c262e11 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -256,7 +256,7 @@ import javax.annotation.Nullable; // Paper
  import javax.annotation.Nonnull; // Paper
  
  public final class CraftServer implements Server {
--    private final String serverName = "Pufferfish"; // Paper // Pufferfish
+-    private final String serverName = "Purpur"; // Paper // Pufferfish // Purpur
 +    private final String serverName = "Minetopia"; // Paper // Pufferfish // Minetopia
      private final String serverVersion;
      private final String bukkitVersion = Versioning.getBukkitVersion();
      private final Logger logger = Logger.getLogger("Minecraft");
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 80553face9c70c2a3d897681e7761df85b22d464..b49d2529286fadbd1140fd0d41b3fb404c3be07b 100644
+index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..b49d2529286fadbd1140fd0d41b3fb404c3be07b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
      public static String getBukkitVersion() {
          String result = "Unknown-Version";
  
--        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/gg.pufferfish.pufferfish/pufferfish-api/pom.properties"); // Pufferfish
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur
 +        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/ru.minetopia.server/minetopia-api/pom.properties"); // Minetopia
          Properties properties = new Properties();
  

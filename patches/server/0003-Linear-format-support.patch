@@ -5,20 +5,21 @@ Subject: [PATCH] Linear format support
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 306763a7a624fc58a95de9134e267e4f7ccc3a35..a993c0c678a30545bcdd98290fe803d1f312c4fd 100644
+index 0b3aeb43f6dbacc3995984095d379d6955392637..755dff89b951332586a4528d966c0f073b75f80e 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -12,6 +12,10 @@ dependencies {
-     implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
-         exclude("io.papermc.paper", "paper-api")
+@@ -38,6 +38,11 @@ dependencies {
      }
+     // Paper end
+ 
 +    // Minetopia start
 +    implementation("com.github.luben:zstd-jni:1.4.4-2")
 +    implementation("org.lz4:lz4-java:1.8.0")
 +    // Minetopia end
-     // Pufferfish end
-     // Paper start
-     implementation("org.jline:jline-terminal-jansi:3.21.0")
++
+     implementation("org.mozilla:rhino-runtime:1.7.14") // Purpur
+     implementation("org.mozilla:rhino-engine:1.7.14") // Purpur
+     implementation("dev.omega24:upnp4j:1.0") // Purpur
 diff --git a/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java b/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java
 index a08cde4eefe879adcee7c4118bc38f98c5097ed0..5f6d9e7953f9beb4dcaea34cba0a24de0b595c9a 100644
 --- a/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java

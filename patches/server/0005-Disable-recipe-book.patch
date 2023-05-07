@@ -5,7 +5,7 @@ Subject: [PATCH] Disable recipe book
 
 
 diff --git a/src/main/java/net/minecraft/stats/ServerRecipeBook.java b/src/main/java/net/minecraft/stats/ServerRecipeBook.java
-index d13ed3069e944d138442ea440ac3eaf8d44c18d3..eaf23b5bf6bcdf7822c6decbd1734e31c91ffb14 100644
+index 29ac7f202aa23f7e6fcdc9829af3d59875c92d4e..2a55660ba10ec2288b7cfd95d54c4ae388ad915b 100644
 --- a/src/main/java/net/minecraft/stats/ServerRecipeBook.java
 +++ b/src/main/java/net/minecraft/stats/ServerRecipeBook.java
 @@ -2,12 +2,6 @@ package net.minecraft.stats;
@@ -78,7 +78,7 @@ index d13ed3069e944d138442ea440ac3eaf8d44c18d3..eaf23b5bf6bcdf7822c6decbd1734e31
          this.setBookSettings(RecipeBookSettings.read(nbt));
          ListTag nbttaglist = nbt.getList("recipes", 8);
  
-@@ -134,6 +141,7 @@ public class ServerRecipeBook extends RecipeBook {
+@@ -135,6 +142,7 @@ public class ServerRecipeBook extends RecipeBook {
      }
  
      public void sendInitialRecipeBook(ServerPlayer player) {
