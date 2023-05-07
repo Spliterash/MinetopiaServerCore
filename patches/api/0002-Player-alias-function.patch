@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Spliterash <me@spliterash.ru>
+Date: Mon, 8 May 2023 02:24:00 +0300
+Subject: [PATCH] Player alias function
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 78a9155e78178f1cc8da2a2d42fd3276565030f5..bc4bbcf69204991d02d174ad273c3da78ae2a5f4 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -12,6 +12,7 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.UUID;
+ import java.util.function.Consumer;
++import java.util.function.Function;
+ import java.util.logging.Logger;
+ import org.bukkit.Warning.WarningState;
+ import org.bukkit.advancement.Advancement;
+@@ -673,6 +674,12 @@ public final class Bukkit {
+         return server.getPlayerExact(name);
+     }
+ 
++    // Minetopia Start
++    public static void addPlayerAliasFunction(Function<String, Player> function) {
++        server.addPlayerAliasFunction(function);
++    }
++    // Minetopia End
++
+     /**
+      * Attempts to match any players with the given name, and returns a list
+      * of all possibly matches.
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 730caafaf9629664ba125f3884559da76616f655..a23377013889c2bd2ef323d6a3a89fe162abcc0f 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -12,6 +12,7 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.UUID;
+ import java.util.function.Consumer;
++import java.util.function.Function;
+ import java.util.logging.Logger;
+ import org.bukkit.Warning.WarningState;
+ import org.bukkit.advancement.Advancement;
+@@ -1940,6 +1941,8 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+     @NotNull
+     UnsafeValues getUnsafe();
+ 
++    void addPlayerAliasFunction(Function<String, Player> function);
++
+     // Spigot start
+     public class Spigot {
+ 
