@@ -88,3 +88,26 @@ paperweight {
         }
     }
 }
+publishing {
+    publications.create<MavenPublication>("devBundle") {
+        artifact(tasks.generateDevelopmentBundle) {
+            artifactId = "dev-bundle"
+        }
+    }
+}
+
+subprojects {
+    publishing {
+        repositories {
+            mavenLocal()
+            maven {
+                name = "nexus"
+                url = uri("https://repo.spliterash.ru/" + rootProject.name)
+                credentials {
+                    username = findProperty("SPLITERASH_NEXUS_USR")?.toString()
+                    password = findProperty("SPLITERASH_NEXUS_PSW")?.toString()
+                }
+            }
+        }
+    }
+}

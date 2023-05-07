@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Spliterash <me@spliterash.ru>
+Date: Mon, 8 May 2023 02:23:05 +0300
+Subject: [PATCH] Player alias functions
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 919dcf429fc1e58d08c63a8f747e7b686c262e11..cf1927ef0d776cdba5d13a6b7b09dfa8ab5423f7 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -234,7 +234,6 @@ import org.bukkit.plugin.PluginManager;
+ import org.bukkit.plugin.ServicesManager;
+ import org.bukkit.plugin.SimplePluginManager;
+ import org.bukkit.plugin.SimpleServicesManager;
+-import org.bukkit.plugin.java.JavaPluginLoader;
+ import org.bukkit.plugin.messaging.Messenger;
+ import org.bukkit.plugin.messaging.StandardMessenger;
+ import org.bukkit.potion.Potion;
+@@ -270,6 +269,7 @@ public final class CraftServer implements Server {
+     private final StructureManager structureManager;
+     protected final DedicatedServer console;
+     protected final DedicatedPlayerList playerList;
++    protected final List<java.util.function.Function<String,Player>> playerAliasFunctions = new ArrayList<>();
+     private final Map<String, World> worlds = new LinkedHashMap<String, World>();
+     private final Map<Class<?>, Registry<?>> registries = new HashMap<>();
+     private YamlConfiguration configuration;
+@@ -599,9 +599,23 @@ public final class CraftServer implements Server {
+         return this.playerView;
+     }
+ 
++    private Player checkPlayerAlias(String input){
++        if (!playerAliasFunctions.isEmpty()) {
++            for (java.util.function.Function<String, Player> aliasFunc : playerAliasFunctions) {
++                Player player = aliasFunc.apply(input);
++                if (player != null)
++                    return player;
++            }
++        }
++        return null;
++    }
+     @Override
+     @Deprecated
+     public Player getPlayer(final String name) {
++        Player playerFromAlias = checkPlayerAlias(name);
++        if (playerFromAlias != null)
++            return playerFromAlias;
++
+         Validate.notNull(name, "Name cannot be null");
+ 
+         Player found = this.getPlayerExact(name);
+@@ -656,6 +670,9 @@ public final class CraftServer implements Server {
+     @Deprecated
+     public List<Player> matchPlayer(String partialName) {
+         Validate.notNull(partialName, "PartialName cannot be null");
++        Player fromFilter = checkPlayerAlias(partialName);
++        if (fromFilter != null)
++            return List.of(fromFilter);
+ 
+         List<Player> matchedPlayers = new ArrayList<Player>();
+ 
+@@ -2761,6 +2778,11 @@ public final class CraftServer implements Server {
+         return CraftMagicNumbers.INSTANCE;
+     }
+ 
++    @Override
++    public void addPlayerAliasFunction(java.util.function.Function<String, Player> function) {
++        playerAliasFunctions.add(function);
++    }
++
+     // Paper - Add getTPS API - Further improve tick loop
+     @Override
+     public double[] getTPS() {
