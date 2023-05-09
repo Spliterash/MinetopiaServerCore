@@ -88,6 +88,17 @@ paperweight {
         }
     }
 }
+tasks.generateDevelopmentBundle {
+    apiCoordinates.set("ru.minetopia.server:minetopia-api")
+    mojangApiCoordinates.set("io.papermc.paper:paper-mojangapi")
+    libraryRepositories.set(
+        listOf(
+            "https://repo.maven.apache.org/maven2/",
+            paperMavenPublicUrl,
+            "https://repo.purpurmc.org/snapshots",
+        )
+    )
+}
 publishing {
     publications.create<MavenPublication>("devBundle") {
         artifact(tasks.generateDevelopmentBundle) {
@@ -96,10 +107,9 @@ publishing {
     }
 }
 
-subprojects {
+allprojects {
     publishing {
         repositories {
-            mavenLocal()
             maven {
                 name = "nexus"
                 url = uri("https://repo.spliterash.ru/minetopia-server")
